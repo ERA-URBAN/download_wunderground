@@ -1,0 +1,57 @@
+#!/usr/bin/env python2
+
+'''
+Description:    Class to combine data of Wunderground csv data into a single
+                output file
+Author:         Ronald van Haren, NLeSC (r.vanharen@esciencecenter.nl)
+Created:
+Last Modified:
+License:        Apache 2.0
+'''
+
+import configargparse
+import os
+import sys
+from download_wunderground.get_data import *
+from download_wunderground.create_netcdf import *
+import download_wunderground.utils as utils
+
+if __name__ == "__main__":
+    # define argument menu
+    description = 'Combine csv files weather underground in one output file'
+    parser = argparse.ArgumentParser(description=description)
+    # fill argument groups
+    parser.add_argument('-o', '--outputdir',
+                        help='Data output directory (defaults to CWD)',
+                        default=os.getcwd(), required=False)
+    parser.add('--TMP_DIR',
+               help='Directory where intermediate files are saved, ' +
+               'defaults to DOWNLOAD_DIR',
+               env_var='TMP_DIR', required=False)
+    parser.add_argument('-b', '--startdate', help='Start date YYYYMMDD',
+                        default=2010, required=False)
+    parser.add_argument('-e', '--enddate', help='End date YYYYMMDD',
+                        default=date.today().year, required=False)
+    parser.add_argument('-s', '--stationid', help='Station id',
+                        default='', required=False, action='store')
+    parser.add_argument('-c', '--csvfile', help='CSV data file containing station information',
+                        required=False, action='store')
+    parser.add_argument('-k', '--keep', help='Keep downloaded files',
+                        required=False, action='store_true')
+    parser.add_argument('-l', '--log', help='Log level',
+                        choices=utils.LOG_LEVELS_LIST,
+                        default=utils.DEFAULT_LOG_LEVEL)
+    # extract user entered arguments
+    opts = parser.parse_args()
+    if not opts.TMP_DIR:
+      # default TMP_DIR to outputdir
+      opts.TMP_DIR = os.path.expanduser(opts.outputdir)
+    # define logger
+    logname = os.path.basename(__file__) + '.log'
+    logger = utils.start_logging(filename=logname, level=opts.log)
+    global logger
+    # Downloading csv data
+    get_wundergrond_data(opts)
+    # create netcdf file
+    csvdir = os.path.join(opts.TMP_DIR, opts.stationid)
+    process_raw_data(csvdir, opts.outputdir)

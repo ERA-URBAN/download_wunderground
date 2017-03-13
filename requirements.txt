@@ -1,0 +1,6 @@
+lxml
+numpy
+ConfigArgParse
+dateutils
+netCDF4
+
