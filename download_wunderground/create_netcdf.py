@@ -53,12 +53,15 @@ class process_raw_data:
                 return
         # do we want to hardcode this?
         self.get_field_names()
-        self.dateUTCstring = [s for s in self.field_names if s is not None
-                              and "DateUTC" in s][0]
-        #self.field_names.append('<br>')
-        # call functions
-        self.combine_raw_data()
-        self.write_combined_data_netcdf()
+        try:
+          self.dateUTCstring = [s for s in self.field_names if s is not None
+                                and "DateUTC" in s][0]
+          #self.field_names.append('<br>')
+          # call functions
+          self.combine_raw_data()
+          self.write_combined_data_netcdf()
+        except AttributeError:
+          print('Nothing to write for ' + self.outputfile)
 
     def combine_raw_data(self):
         '''
