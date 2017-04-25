@@ -26,6 +26,7 @@ import time
 from datetime import datetime
 import download_wunderground.utils as utils
 import logging
+from download_wunderground.create_netcdf import *
 
 class get_wundergrond_data:
     def __init__(self, opts):
@@ -48,10 +49,11 @@ class get_wundergrond_data:
         else:
             stationids = [opts.stationid]
         for self.stationid in stationids:
-            self.outputdir = os.path.join(opts.outputdir, self.stationid)
+            self.outputdir = os.path.join(opts.TMP_DIR, self.stationid)
             if not os.path.exists(self.outputdir):
                 os.makedirs(self.outputdir)
             self.get_data_multiprocessing()
+            process_raw_data(self.outputdir, opts.outputdir)
 
     def validate_date(self, datestring):
       '''

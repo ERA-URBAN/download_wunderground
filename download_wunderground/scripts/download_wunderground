@@ -45,13 +45,10 @@ if __name__ == "__main__":
     opts = parser.parse_args()
     if not opts.TMP_DIR:
       # default TMP_DIR to outputdir
-      opts.TMP_DIR = os.path.expanduser(opts.outputdir)
+      opts.TMP_DIR = os.path.join(opts.outputdir, 'tmp')
     # define logger
     logname = os.path.basename(__file__) + '.log'
     logger = utils.start_logging(filename=logname, level=opts.log)
     global logger
-    # Downloading csv data
+    # Downloading csv data & create netcdf files
     get_wundergrond_data(opts)
-    # create netcdf file
-    csvdir = os.path.join(opts.TMP_DIR, opts.stationid)
-    process_raw_data(csvdir, opts.outputdir)
