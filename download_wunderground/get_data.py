@@ -44,16 +44,25 @@ class get_wundergrond_data:
                           'be specified')
         if self.csvfile:
             self.load_csvfile()
+            longitudes = self.csvdata['lon']
+            latitudes = self.csvdata['lat']
             if not opts.stationid:
                 stationids = self.csvdata['Station ID']
+            else:
+                stationids = [opts.stationid]
         else:
             stationids = [opts.stationid]
-        for self.stationid in stationids:
+        for idx, self.stationid in enumerate(stationids):
             self.outputdir = os.path.join(opts.TMP_DIR, self.stationid)
             if not os.path.exists(self.outputdir):
                 os.makedirs(self.outputdir)
             self.get_data_multiprocessing()
-            process_raw_data(self.outputdir, opts.outputdir)
+            try:
+              lat = latitudes[idx]
+              lon = longitudes[idx]
+              process_raw_data(self.outputdir, opts.outputdir, lat, lon)
+            except NameError:
+              process_raw_data(self.outputdir, opts.outputdir)
 
     def validate_date(self, datestring):
       '''

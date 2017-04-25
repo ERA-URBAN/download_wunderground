@@ -36,7 +36,7 @@ class process_raw_data:
     Class to read the raw input data and combine them into a single output
     file
     '''
-    def __init__(self, inputdir, outputdir):
+    def __init__(self, inputdir, outputdir, lat=False, lon=False):
         # set class variables
         self.inputdir = inputdir
         print('Processing ' + self.inputdir)
@@ -44,6 +44,8 @@ class process_raw_data:
         # define filename as basename inputdir with .nc extension
         filename = os.path.basename(self.inputdir) + '.nc'
         self.outputfile = os.path.join(self.outputdir, filename)
+        self.lat = lat
+        self.lon = lon
         if os.path.exists(os.path.join(self.outputfile)):
             # check if filesize is not null
             if os.path.getsize(os.path.join(self.outputfile)) > 0:
@@ -169,6 +171,20 @@ class process_raw_data:
         timevar.standard_name = 'time'
         timevar.long_name = 'time in UTC'
 
+        # write lon/lat variables if available
+        if ((self.lat) and (self.lon)):
+            lonvar = ncfile.createDimension('longitude', 1)
+            lonvar = ncfile.createVariable('longitude', 'float32',('longitude',))
+            lonvar.units = 'degrees_east'
+            lonvar.axis = 'X'
+            lonvar.standard_name = 'longitude'
+            lonvar[:] = self.lon
+            latvar = ncfile.createDimension('latitude', 1)
+            latvar = ncfile.createVariable('latitude', 'float32',('latitude',))
+            latvar.units = 'degrees_north'
+            latvar.axis = 'Y'
+            latvar.standard_name = 'latitude'
+            latvar[:] = self.lat
         # create other variables in netcdf file
         for self.variable in self.data.keys():
             if self.variable not in [self.dateUTCstring, 'Time', '<br>', None]:
@@ -185,6 +201,9 @@ class process_raw_data:
                     if self.variable == 'SolarRadiationWatts/m^2':
                         #variableName = 'SolarRadiation'
                         continue
+                    elif ((self.variable == 'TemperatureC') or
+                          (self.variable == 'TemperatureF')):
+                        variableName = 'temperature'
                     else:
                         variableName = self.variable
                     self.values = ncfile.createVariable(
@@ -195,9 +214,14 @@ class process_raw_data:
                     self.values = ncfile.createVariable(
                         self.variable, type(self.data[self.variable][1]),
                         ('time',), zlib=True)
-                # TODO: convert C->K, km/h->m/s ??
+                # TODO: km/h->m/s ??
                 try:  # fill variable
-                    self.values[:] = self.data[self.variable][1:]
+                    if not self.variable in ['TemperatureC', 'TemperatureF']:
+                      self.values[:] = self.data[self.variable][1:]
+                    elif self.variable == 'TemperatureC':
+                      self.values[:] = 273.15 + nparray(self.data[self.variable][1:])
+                    elif self.variable == 'TemperatureF':
+                      self.values[:] = (nparray(self.data[self.variable][1:]) - 32.)/1.8
                 except IndexError:
                     # for strings the syntax is slightly different
                     self.values = self.data[self.variable][1:]
@@ -208,11 +232,11 @@ class process_raw_data:
         Function that fills the attribute data of the netcdf file
         '''
         if self.variable == 'TemperatureC':
-            self.values.units = 'C'
+            self.values.units = 'K'
             self.values.standard_name = 'air_temperature'
             self.values.long_name = 'air temperature'
         elif self.variable == 'TemperatureF':
-            self.values.units = 'F'
+            self.values.units = 'K'
             self.values.standard_name = 'air_temperature'
             self.values.long_name = 'air temperature'
         elif self.variable == 'DewpointC':
