@@ -226,6 +226,7 @@ class process_raw_data:
                     # for strings the syntax is slightly different
                     self.values = self.data[self.variable][1:]
                 self.fill_attribute_data()
+        ncfile.close()
 
     def fill_attribute_data(self):
         '''
