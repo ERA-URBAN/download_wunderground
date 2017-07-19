@@ -27,6 +27,8 @@ from datetime import datetime
 import download_wunderground.utils as utils
 import logging
 from download_wunderground.create_netcdf import *
+import shutil
+import tarfile
 
 class get_wundergrond_data:
     def __init__(self, opts):
@@ -63,6 +65,13 @@ class get_wundergrond_data:
               process_raw_data(self.outputdir, opts.outputdir, lat, lon)
             except NameError:
               process_raw_data(self.outputdir, opts.outputdir)
+            # create tar file of directory with csv files
+            outputtar = os.path.join(opts.outputdir, self.stationid + '.tar.gz')
+            tar = tarfile.open(outputtar, "w:gz")
+            tar.add(self.outputdir)
+            tar.close()
+            # remove csv files
+            shutil.rmtree(self.outputdir)
 
     def validate_date(self, datestring):
       '''
